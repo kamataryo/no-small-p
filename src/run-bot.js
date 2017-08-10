@@ -4,8 +4,9 @@
  * @param  {TwitterClient} client twitter client instance
  * @return {Promise}        [description]
  */
-export default client => client
-  .get('search/tweets', { q : '#Wordpress OR "Wordpress"', count : 100 })
+
+export default (client, q) => client
+  .get('search/tweets', { q, count : 100 })
   .then(tweets => {
     const matters = tweets.statuses
       .filter(({ text }) => (

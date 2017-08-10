@@ -16,5 +16,6 @@ fs.readFile(__dirname + '/../.config.json', (error, body) => {
   const file = JSON.parse(body.toString())
   const config = error ? env : { ...env, ...file }
   const client = new Twitter(config)
-  runBot(client)
+  runBot(client, '"#Wordpress"')
+  runBot(client, 'Wordpress')
 })
