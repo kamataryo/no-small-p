@@ -4,7 +4,7 @@ export default async client => {
   let tweets
 
   try {
-    tweets = await client.get('search/tweets', { q : '"Wordpress"', count : 100 })
+    tweets = await client.get('search/tweets', { q : '#Wordpress "Wordpress"', count : 100 })
   } catch (e) {
     process.error.write(e)
   }
