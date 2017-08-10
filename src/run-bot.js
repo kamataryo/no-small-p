@@ -1,48 +1,38 @@
 
-export default async client => {
+/**
+ * [description]
+ * @param  {TwitterClient} client twitter client instance
+ * @return {Promise}        [description]
+ */
+export default client => client
+  .get('search/tweets', { q : '#Wordpress OR "Wordpress"', count : 100 })
+  .then(tweets => {
+    const matters = tweets.statuses
+      .filter(({ text }) => (
+        text.includes('Wordpress') &&
+        !text.includes('WordPress')
+      ))
+      .map(status => ({
+        id        : status.id_str,
+        favorited : status.favorited,
+        retweeted : status.retweeted,
+        userId    : status.user.id_str,
+        following : status.user.following,
+        requested : status.user.follow_request_sent,
+        lang      : status.user.lang,
+      }))
 
-  let tweets
+      const retweetRequests = matters
+        .filter(x => !x.retweeted)
+        .map(matter => client.post('statuses/retweet', { id: matter.id }))
 
-  try {
-    tweets = await client.get('search/tweets', { q : '#Wordpress "Wordpress"', count : 100 })
-  } catch (e) {
-    process.error.write(e)
-  }
-  const matters = tweets.statuses
-    .filter(status => (
-      status.text.includes('Wordpress') &&
-      !status.text.includes('WordPress')
-    ))
-    .map(status => ({
-      id        : status.id_str,
-      favorited : status.favorited,
-      retweeted : status.retweeted,
-      userId    : status.user.id_str,
-      following : status.user.following,
-      requested : status.user.follow_request_sent,
-    }))
+      const followRequests = matters
+        .filter(x => !x.following && !x.follow_request_sent)
+        .map(matter => client.post('friendships/create', { id: matter.userId }))
 
-  const retweets = matters
-    .filter(x => !x.retweeted)
-    .map(matter => client.post('statuses/retweet', { id: matter.id }))
+      const requests = [...retweetRequests, ...followRequests]
 
-  const followRequests = matters
-    .filter(x => !x.following && !x.follow_request_sent)
-    .map(matter => client.post('friendships/create', { id: matter.userId }))
-
-  const requests = [...retweets, ...followRequests]
-
-  let result
-
-  if (requests.length > 0) {
-    try {
-      result = await Promise.all(requests)
-    } catch (e) {
-      process.stdout.write(result)
-      process.stderr.write(e)
-    }
-  }
-
-  return result
-
-}
+      return requests.length > 0 ? Promise.all(requests) : false
+  })
+  .then(results => process.stdout.write(JSON.stringify(results)))
+  .catch(error => process.stderr.write(JSON.stringify(error)))

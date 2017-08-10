@@ -9,13 +9,12 @@ const env = {
   access_token_secret : process.env.TWITTER_ACCESS_TOKEN_SECRET,
 }
 
-let config
+// eslint-disable-next-line  no-console
+process.on('unhandledRejection', console.dir)
 
 fs.readFile(__dirname + '/../.config.json', (error, body) => {
-  if (!error) {
-    config = JSON.parse(body.toString())
-  }
-  const client = new Twitter({ ...env, ...config })
-
+  const file = JSON.parse(body.toString())
+  const config = error ? env : { ...env, ...file }
+  const client = new Twitter(config)
   runBot(client)
 })
